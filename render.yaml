@@ -1,0 +1,37 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: c-suite-pathway-db
+    env: postgres
+    plan: free
+    region: oregon
+    ipAllowList: []
+
+  # Web Service
+  - type: web
+    name: c-suite-pathway-web
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromService:
+          name: c-suite-pathway-db
+          type: pserv
+          property: connectionString
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USE_TLS
+        value: true
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
