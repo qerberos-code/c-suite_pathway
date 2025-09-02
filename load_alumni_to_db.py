@@ -11,7 +11,7 @@ from datetime import datetime
 # Add the current directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app import app, db, Alumni
+from app import app, db, Alumni, UserMessage
 
 # Processed alumni data from the previous script
 ALUMNI_DATA = [

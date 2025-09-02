@@ -11,7 +11,7 @@ from datetime import datetime
 # Add the current directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app import app, db, User, Message, Event, Resource, FAQ, Alumni
+from app import app, db, User, UserMessage, Event, Resource, FAQ, Alumni
 from werkzeug.security import generate_password_hash
 
 def migrate_database():

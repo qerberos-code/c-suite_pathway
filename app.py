@@ -99,7 +99,7 @@ def is_alumni_email(email):
     alumni = Alumni.query.filter_by(email=email.lower(), is_active=True).first()
     return alumni is not None
 
-class Message(db.Model):
+class UserMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
@@ -219,8 +219,8 @@ def verify_email(token):
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    admin_messages = Message.query.filter_by(message_type='admin').order_by(Message.created_at.desc()).limit(5).all()
-    classmate_messages = Message.query.filter_by(message_type='classmate').order_by(Message.created_at.desc()).limit(10).all()
+    admin_messages = UserMessage.query.filter_by(message_type='admin').order_by(UserMessage.created_at.desc()).limit(5).all()
+    classmate_messages = UserMessage.query.filter_by(message_type='classmate').order_by(UserMessage.created_at.desc()).limit(10).all()
     upcoming_events = Event.query.filter(Event.date >= datetime.utcnow()).order_by(Event.date).limit(5).all()
     
     return render_template('dashboard.html', 
@@ -231,7 +231,7 @@ def dashboard():
 @app.route('/messages')
 @login_required
 def messages():
-    messages = Message.query.order_by(Message.created_at.desc()).all()
+    messages = UserMessage.query.order_by(UserMessage.created_at.desc()).all()
     return render_template('messages.html', messages=messages)
 
 @app.route('/add_message', methods=['GET', 'POST'])
@@ -242,7 +242,7 @@ def add_message():
         content = request.form['content']
         message_type = 'admin' if current_user.is_admin else 'classmate'
         
-        new_message = Message(
+        new_message = UserMessage(
             title=title,
             content=content,
             author_id=current_user.id,
