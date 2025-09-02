@@ -123,9 +123,6 @@ def init_database():
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Initialize database when app starts
-init_database()
-
 # Database Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -284,6 +281,9 @@ class FAQ(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# Initialize database when app starts (after all models are defined)
+init_database()
 
 # Routes
 @app.route('/')
