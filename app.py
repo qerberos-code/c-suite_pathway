@@ -99,6 +99,24 @@ def is_alumni_email(email):
     alumni = Alumni.query.filter_by(email=email.lower(), is_active=True).first()
     return alumni is not None
 
+def verify_alumni_registration(first_name, last_name, email):
+    """Verify that the registration matches a verified C-Suite Pathway alumni"""
+    # Check the Alumni table for exact match
+    alumni = Alumni.query.filter_by(
+        email=email.lower(), 
+        is_active=True
+    ).first()
+    
+    if not alumni:
+        return False, "Email not found in alumni database"
+    
+    # Check if names match (case-insensitive)
+    if (alumni.first_name.lower() != first_name.lower() or 
+        alumni.last_name.lower() != last_name.lower()):
+        return False, f"Name does not match alumni record. Expected: {alumni.first_name} {alumni.last_name}"
+    
+    return True, "Verification successful"
+
 class UserMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -178,9 +196,10 @@ def register():
                 flash('This email is already registered but not verified. Please check your email for verification link.')
             return render_template('register.html')
         
-        # Check if email is in the approved alumni list
-        if not is_alumni_email(email):
-            flash('This email address is not recognized as a C-Suite Pathway alumni email. Please contact the administrator if you believe this is an error.')
+        # Verify that the registration matches a verified alumni
+        is_verified, message = verify_alumni_registration(first_name, last_name, email)
+        if not is_verified:
+            flash(f'Alumni verification failed: {message}. Please check your information and try again.')
             return render_template('register.html')
         
         try:
