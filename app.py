@@ -16,6 +16,9 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 if os.environ.get('DATABASE_URL'):
     # Production: Use PostgreSQL from Render
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+elif os.environ.get('RENDER'):
+    # Production on Render: Use SQLite (simpler setup)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///csuite.db'
 else:
     # Development: Use SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///csuite.db'
