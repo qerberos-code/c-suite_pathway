@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}C-Suite Pathway Program Alumni - Welcome{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="display-4 fw-bold text-white mb-4">
+                        C-Suite Pathway Program
+                    </h1>
+                    <p class="lead text-white mb-4">
+                        Alumni community of the completed C-Suite Pathway Program. A joint initiative by IESE Business School and NYU Stern School of Business.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-logos text-center">
+                    <div class="logo-container">
+                        <img src="{{ url_for('static', filename='images/iese-logo.svg') }}" alt="IESE Business School" class="hero-logo mb-3">
+                        <div class="logo-divider">
+                            <span class="text-white fs-2">&</span>
+                        </div>
+                        <img src="{{ url_for('static', filename='images/nyu-stern-logo.png') }}" alt="NYU Stern School of Business" class="hero-logo mb-3">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="features-section py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-5 fw-bold">What We Stand For</h2>
+                <p class="lead text-muted">Our values and principles that guide our alumni community</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-users fa-3x text-primary"></i>
+                    </div>
+                    <h4>Network & Connect</h4>
+                    <p class="text-muted">Maintain connections with high-caliber executives from diverse industries and backgrounds.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-lightbulb fa-3x text-primary"></i>
+                    </div>
+                    <h4>Innovation Mindset</h4>
+                    <p class="text-muted">Continue fostering organization-wide innovation and turning promising ideas into successful ventures.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-primary"></i>
+                    </div>
+                    <h4>Strategic Vision</h4>
+                    <p class="text-muted">Maintain sharp strategic thinking and awareness of disruptive forces in the business landscape.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section py-5 bg-light">
+    <div class="container text-center">
+        <h3 class="mb-4">Stay connected with your C-Suite community</h3>
+        <p class="lead mb-4">Join our exclusive alumni network and continue your leadership journey.</p>
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-users"></i> Join Alumni Network
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - C-Suite Pathway Program{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">Messages</h1>
+                <a href="{{ url_for('add_message') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Message
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="message-item mb-4 p-4 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="mb-1">{{ message.title }}</h5>
+                                    <span class="badge {% if message.message_type == 'admin' %}bg-primary{% else %}bg-info{% endif %}">
+                                        {{ message.message_type|title }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ message.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                            </div>
+                            <p class="mb-3">{{ message.content }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i> {{ message.author.first_name }} {{ message.author.last_name }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No messages yet</h5>
+                            <p class="text-muted">Be the first to share something with your classmates!</p>
+                            <a href="{{ url_for('add_message') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Post First Message
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

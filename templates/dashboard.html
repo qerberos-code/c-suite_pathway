@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - C-Suite Pathway Program{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Welcome Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <h1 class="h2 mb-2">Welcome back, {{ current_user.first_name }}!</h1>
+                    <p class="text-muted mb-0">Stay connected with your C-Suite Pathway alumni community</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Admin Messages Section -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bullhorn text-primary"></i> Admin Messages
+                        </h5>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('add_message') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> New Message
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if admin_messages %}
+                            {% for message in admin_messages %}
+                            <div class="message-item mb-3 p-3 border rounded">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-1">{{ message.title }}</h6>
+                                    <small class="text-muted">{{ message.created_at.strftime('%B %d, %Y') }}</small>
+                                </div>
+                                <p class="mb-2">{{ message.content }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i> {{ message.author.first_name }} {{ message.author.last_name }}
+                                </small>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-3">No admin messages yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Events -->
+            <div class="col-lg-4 mb-4">
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt text-warning"></i> Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('add_message') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-comment"></i> Post Message
+                            </a>
+                            <a href="{{ url_for('add_event') }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-calendar-plus"></i> Add Event
+                            </a>
+                            <a href="{{ url_for('add_faq') }}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-question"></i> Add FAQ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Events -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar text-success"></i> Upcoming Events
+                        </h5>
+                        <a href="{{ url_for('calendar') }}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-eye"></i> View All
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_events %}
+                            {% for event in upcoming_events %}
+                            <div class="event-item mb-3 p-2 border rounded">
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-clock"></i> {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}
+                                </small>
+                                {% if event.location %}
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-3">No upcoming events.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classmate Messages Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users text-info"></i> Classmate Messages
+                        </h5>
+                        <a href="{{ url_for('add_message') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> New Message
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if classmate_messages %}
+                            <div class="row">
+                                {% for message in classmate_messages %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="message-card p-3 border rounded h-100">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-1">{{ message.title }}</h6>
+                                            <small class="text-muted">{{ message.created_at.strftime('%m/%d') }}</small>
+                                        </div>
+                                        <p class="mb-2 text-muted">{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
+                                        <small class="text-primary">
+                                            <i class="fas fa-user"></i> {{ message.author.first_name }} {{ message.author.last_name }}
+                                        </small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center py-3">No classmate messages yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
