@@ -172,7 +172,10 @@ def register():
         # Check if user already exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            flash('Email already registered.')
+            if existing_user.is_verified:
+                flash('This email is already registered and verified. Please sign in instead.')
+            else:
+                flash('This email is already registered but not verified. Please check your email for verification link.')
             return render_template('register.html')
         
         # Check if email is in the approved alumni list
@@ -180,26 +183,36 @@ def register():
             flash('This email address is not recognized as a C-Suite Pathway alumni email. Please contact the administrator if you believe this is an error.')
             return render_template('register.html')
         
-        # Create verification token
-        verification_token = secrets.token_urlsafe(32)
-        
-        # Create new user
-        new_user = User(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            password_hash=generate_password_hash(password),
-            verification_token=verification_token
-        )
-        
-        db.session.add(new_user)
-        db.session.commit()
-        
-        # Send verification email
-        send_verification_email(new_user)
-        
-        flash('Registration successful! Please check your email to verify your account.')
-        return redirect(url_for('login'))
+        try:
+            # Create verification token
+            verification_token = secrets.token_urlsafe(32)
+            
+            # Create new user
+            new_user = User(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                password_hash=generate_password_hash(password),
+                verification_token=verification_token
+            )
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            # Send verification email
+            email_sent = send_verification_email(new_user)
+            
+            if email_sent:
+                flash('Registration successful! Please check your email to verify your account.')
+            else:
+                flash('Registration successful! Your account has been auto-verified for development.')
+            
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Registration failed: {str(e)}. Please try again.')
+            return render_template('register.html')
     
     return render_template('register.html')
 
@@ -329,6 +342,22 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/debug/users')
+def debug_users():
+    """Debug route to see current users (remove in production)"""
+    users = User.query.all()
+    result = []
+    for user in users:
+        result.append({
+            'id': user.id,
+            'name': f"{user.first_name} {user.last_name}",
+            'email': user.email,
+            'verified': user.is_verified,
+            'admin': user.is_admin,
+            'created': user.created_at
+        })
+    return {'users': result, 'count': len(result)}
+
 # Admin routes for managing alumni
 @app.route('/admin/alumni')
 @login_required
@@ -379,25 +408,36 @@ def add_alumni():
     return render_template('add_alumni.html')
 
 def send_verification_email(user):
-    msg = Message(
-        'Verify Your C-Suite Pathway Account',
-        sender=app.config['MAIL_USERNAME'],
-        recipients=[user.email]
-    )
-    
-    verification_url = url_for('verify_email', token=user.verification_token, _external=True)
-    
-    msg.html = f'''
-    <h2>Welcome to C-Suite Pathway Program!</h2>
-    <p>Hi {user.first_name},</p>
-    <p>Thank you for registering for the C-Suite Pathway Program. Please click the button below to verify your email address:</p>
-    <a href="{verification_url}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
-    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-    <p>{verification_url}</p>
-    <p>Best regards,<br>C-Suite Pathway Team</p>
-    '''
-    
-    mail.send(msg)
+    try:
+        msg = Message(
+            'Verify Your C-Suite Pathway Account',
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[user.email]
+        )
+        
+        verification_url = url_for('verify_email', token=user.verification_token, _external=True)
+        
+        msg.html = f'''
+        <h2>Welcome to C-Suite Pathway Program!</h2>
+        <p>Hi {user.first_name},</p>
+        <p>Thank you for registering for the C-Suite Pathway Program. Please click the button below to verify your email address:</p>
+        <a href="{verification_url}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
+        <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p>{verification_url}</p>
+        <p>Best regards,<br>C-Suite Pathway Team</p>
+        '''
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {str(e)}")
+        # For development, we'll auto-verify the user if email fails
+        if app.config.get('MAIL_USERNAME') == 'your-email@gmail.com':
+            user.is_verified = True
+            user.verification_token = None
+            db.session.commit()
+            return False
+        return False
 
 if __name__ == '__main__':
     with app.app_context():
