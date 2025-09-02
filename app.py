@@ -60,11 +60,33 @@ class Alumni(db.Model):
 # Alumni verification - List of approved alumni emails
 # In production, this could be stored in environment variables or a separate table
 ALUMNI_EMAILS = {
-    # Add alumni emails here
-    'john.doe@company.com',
-    'jane.smith@company.com',
-    'mike.johnson@company.com',
-    # Add more alumni emails as needed
+    # C-Suite Pathway Alumni Emails
+    'atizzoni@bladex.com',
+    'alex.ozzetti@gmail.com',
+    'amanjeetsaluja@gmail.com',
+    'chentail@protonmail.ch',
+    'asafsnear@gmail.com',
+    'belenalonsorobles@gmail.com',
+    'dorozco@koskoff.com',
+    'ealjudaibi@spb.com.sa',
+    'fulyasarican88@hotmail.com',
+    'gabriel@aplusfinishes.com',
+    'gongreenesgsolutions@gmail.com',
+    'hamehmadi@spb.com.sa',
+    'yoichiro.akahane@us.panasonic.com',
+    'jclopez@lopesolutions.com',
+    'marijosebetant@gmail.com',
+    'natalia.mercker@cfcdiamonds.com',
+    'ppimenta@abanca.com',
+    'pripasq@yahoo.com.br',
+    'quincimartin3@gmail.com',
+    'ralsufyani@moc.gov.sa',
+    'rafael.bittar@gmail.com',
+    'mehta.runi@gmail.com',
+    'sam.mangrum@leewardenergy.com',
+    's.alfaadhel@misk.org.sa',
+    'tdhoy@grundfos.com',
+    'yusuf.s.zaabi@pdo.co.om'
 }
 
 def is_alumni_email(email):
