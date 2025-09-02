@@ -70,6 +70,11 @@
                             <a href="{{ url_for('add_faq') }}" class="btn btn-outline-info btn-sm">
                                 <i class="fas fa-question"></i> Add FAQ
                             </a>
+                            {% if current_user.is_admin %}
+                            <a href="{{ url_for('admin_alumni') }}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-users"></i> Manage Alumni
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

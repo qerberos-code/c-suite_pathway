@@ -45,6 +45,38 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     verification_token = db.Column(db.String(100), unique=True)
 
+class Alumni(db.Model):
+    """Table to store verified C-Suite Pathway alumni information"""
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    graduation_year = db.Column(db.Integer)
+    company = db.Column(db.String(100))
+    position = db.Column(db.String(100))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Alumni verification - List of approved alumni emails
+# In production, this could be stored in environment variables or a separate table
+ALUMNI_EMAILS = {
+    # Add alumni emails here
+    'john.doe@company.com',
+    'jane.smith@company.com',
+    'mike.johnson@company.com',
+    # Add more alumni emails as needed
+}
+
+def is_alumni_email(email):
+    """Check if email belongs to a verified C-Suite Pathway alumni"""
+    # First check the hardcoded list
+    if email.lower() in {email.lower() for email in ALUMNI_EMAILS}:
+        return True
+    
+    # Then check the Alumni table
+    alumni = Alumni.query.filter_by(email=email.lower(), is_active=True).first()
+    return alumni is not None
+
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -119,6 +151,11 @@ def register():
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash('Email already registered.')
+            return render_template('register.html')
+        
+        # Check if email is in the approved alumni list
+        if not is_alumni_email(email):
+            flash('This email address is not recognized as a C-Suite Pathway alumni email. Please contact the administrator if you believe this is an error.')
             return render_template('register.html')
         
         # Create verification token
@@ -269,6 +306,55 @@ def add_faq():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+# Admin routes for managing alumni
+@app.route('/admin/alumni')
+@login_required
+def admin_alumni():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('dashboard'))
+    
+    alumni_list = Alumni.query.filter_by(is_active=True).order_by(Alumni.last_name).all()
+    return render_template('admin_alumni.html', alumni_list=alumni_list)
+
+@app.route('/admin/add_alumni', methods=['GET', 'POST'])
+@login_required
+def add_alumni():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        email = request.form['email']
+        graduation_year = request.form.get('graduation_year')
+        company = request.form.get('company')
+        position = request.form.get('position')
+        
+        # Check if alumni already exists
+        existing_alumni = Alumni.query.filter_by(email=email).first()
+        if existing_alumni:
+            flash('Alumni with this email already exists.')
+            return render_template('add_alumni.html')
+        
+        new_alumni = Alumni(
+            first_name=first_name,
+            last_name=last_name,
+            email=email.lower(),
+            graduation_year=int(graduation_year) if graduation_year else None,
+            company=company,
+            position=position
+        )
+        
+        db.session.add(new_alumni)
+        db.session.commit()
+        
+        flash(f'Alumni {first_name} {last_name} added successfully!')
+        return redirect(url_for('admin_alumni'))
+    
+    return render_template('add_alumni.html')
 
 def send_verification_email(user):
     msg = Message(
