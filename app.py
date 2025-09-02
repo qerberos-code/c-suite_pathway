@@ -10,7 +10,7 @@ import uuid
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'csuite-pathway-secret-key-2024')
 
 # Database configuration
 if os.environ.get('DATABASE_URL'):
@@ -219,21 +219,26 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        
-        user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password_hash, password):
-            if user.is_verified:
-                login_user(user)
-                return redirect(url_for('dashboard'))
+    try:
+        if request.method == 'POST':
+            email = request.form['email']
+            password = request.form['password']
+            
+            user = User.query.filter_by(email=email).first()
+            if user and check_password_hash(user.password_hash, password):
+                if user.is_verified:
+                    login_user(user)
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash('Please verify your email before logging in.')
             else:
-                flash('Please verify your email before logging in.')
-        else:
-            flash('Invalid email or password.')
-    
-    return render_template('login.html')
+                flash('Invalid email or password.')
+        
+        return render_template('login.html')
+    except Exception as e:
+        app.logger.error(f'Login error: {str(e)}')
+        flash('An error occurred during login. Please try again.')
+        return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
