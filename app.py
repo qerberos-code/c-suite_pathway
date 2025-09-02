@@ -378,60 +378,71 @@ def add_event():
 @app.route('/resources')
 @login_required
 def resources():
-    resources = Resource.query.order_by(Resource.created_at.desc()).all()
-    return render_template('resources.html', resources=resources)
+    try:
+        resources = Resource.query.order_by(Resource.created_at.desc()).all()
+        return render_template('resources.html', resources=resources)
+    except Exception as e:
+        # If there's a database schema issue, show empty resources
+        print(f"Database error in resources: {str(e)}")
+        flash('Resources temporarily unavailable. Please try again later.')
+        return render_template('resources.html', resources=[])
 
 @app.route('/add_resource', methods=['GET', 'POST'])
 @login_required
 def add_resource():
     if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        
-        # Check if file was uploaded
-        if 'file' not in request.files:
-            flash('No file selected.')
-            return render_template('add_resource.html')
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            flash('No file selected.')
-            return render_template('add_resource.html')
-        
-        if file and allowed_file(file.filename):
-            # Create upload directory if it doesn't exist
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        try:
+            title = request.form['title']
+            description = request.form['description']
             
-            # Generate unique filename
-            file_extension = file.filename.rsplit('.', 1)[1].lower()
-            unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            # Check if file was uploaded
+            if 'file' not in request.files:
+                flash('No file selected.')
+                return render_template('add_resource.html')
             
-            # Save file
-            file.save(file_path)
+            file = request.files['file']
             
-            # Get file size
-            file_size = os.path.getsize(file_path)
+            if file.filename == '':
+                flash('No file selected.')
+                return render_template('add_resource.html')
             
-            # Create resource record
-            new_resource = Resource(
-                title=title,
-                description=description,
-                file_path=unique_filename,
-                file_name=file.filename,
-                file_size=file_size,
-                file_type=file_extension,
-                uploaded_by=current_user.id
-            )
-            
-            db.session.add(new_resource)
-            db.session.commit()
-            
-            flash('Resource uploaded successfully!')
-            return redirect(url_for('resources'))
-        else:
-            flash('File type not allowed. Please upload a valid file.')
+            if file and allowed_file(file.filename):
+                # Create upload directory if it doesn't exist
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                # Generate unique filename
+                file_extension = file.filename.rsplit('.', 1)[1].lower()
+                unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                
+                # Save file
+                file.save(file_path)
+                
+                # Get file size
+                file_size = os.path.getsize(file_path)
+                
+                # Create resource record
+                new_resource = Resource(
+                    title=title,
+                    description=description,
+                    file_path=unique_filename,
+                    file_name=file.filename,
+                    file_size=file_size,
+                    file_type=file_extension,
+                    uploaded_by=current_user.id
+                )
+                
+                db.session.add(new_resource)
+                db.session.commit()
+                
+                flash('Resource uploaded successfully!')
+                return redirect(url_for('resources'))
+            else:
+                flash('File type not allowed. Please upload a valid file.')
+                return render_template('add_resource.html')
+        except Exception as e:
+            print(f"Error uploading resource: {str(e)}")
+            flash('Error uploading resource. Please try again.')
             return render_template('add_resource.html')
     
     return render_template('add_resource.html')
