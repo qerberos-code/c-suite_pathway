@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_mail import Mail, Message
@@ -6,6 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime
 import secrets
+import uuid
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
@@ -27,9 +29,22 @@ app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == '
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'your-email@gmail.com')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your-app-password')
 
+# File upload configuration
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'jpg', 'jpeg', 'png', 'gif'}
+
 db = SQLAlchemy(app)
 mail = Mail(app)
 login_manager = LoginManager()
+
+# Make helper functions available in templates
+@app.context_processor
+def utility_processor():
+    return {
+        'get_file_icon': get_file_icon,
+        'format_file_size': format_file_size
+    }
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
@@ -99,6 +114,40 @@ def is_alumni_email(email):
     alumni = Alumni.query.filter_by(email=email.lower(), is_active=True).first()
     return alumni is not None
 
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_file_icon(file_type):
+    """Get appropriate icon for file type"""
+    icons = {
+        'pdf': 'fas fa-file-pdf',
+        'doc': 'fas fa-file-word',
+        'docx': 'fas fa-file-word',
+        'ppt': 'fas fa-file-powerpoint',
+        'pptx': 'fas fa-file-powerpoint',
+        'xls': 'fas fa-file-excel',
+        'xlsx': 'fas fa-file-excel',
+        'txt': 'fas fa-file-alt',
+        'jpg': 'fas fa-file-image',
+        'jpeg': 'fas fa-file-image',
+        'png': 'fas fa-file-image',
+        'gif': 'fas fa-file-image'
+    }
+    return icons.get(file_type.lower(), 'fas fa-file')
+
+def format_file_size(size_bytes):
+    """Format file size in human readable format"""
+    if size_bytes == 0:
+        return "0B"
+    size_names = ["B", "KB", "MB", "GB"]
+    i = 0
+    while size_bytes >= 1024 and i < len(size_names) - 1:
+        size_bytes /= 1024.0
+        i += 1
+    return f"{size_bytes:.1f}{size_names[i]}"
+
 def verify_alumni_registration(first_name, last_name, email):
     """Verify that the registration matches a verified C-Suite Pathway alumni"""
     # Check the Alumni table for exact match
@@ -140,8 +189,12 @@ class Resource(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     file_path = db.Column(db.String(500))
+    file_name = db.Column(db.String(200))
+    file_size = db.Column(db.Integer)  # Size in bytes
+    file_type = db.Column(db.String(50))  # MIME type
     uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploader = db.relationship('User', backref='uploaded_resources')
 
 class FAQ(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -327,6 +380,99 @@ def add_event():
 def resources():
     resources = Resource.query.order_by(Resource.created_at.desc()).all()
     return render_template('resources.html', resources=resources)
+
+@app.route('/add_resource', methods=['GET', 'POST'])
+@login_required
+def add_resource():
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        
+        # Check if file was uploaded
+        if 'file' not in request.files:
+            flash('No file selected.')
+            return render_template('add_resource.html')
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            flash('No file selected.')
+            return render_template('add_resource.html')
+        
+        if file and allowed_file(file.filename):
+            # Create upload directory if it doesn't exist
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            
+            # Generate unique filename
+            file_extension = file.filename.rsplit('.', 1)[1].lower()
+            unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            
+            # Save file
+            file.save(file_path)
+            
+            # Get file size
+            file_size = os.path.getsize(file_path)
+            
+            # Create resource record
+            new_resource = Resource(
+                title=title,
+                description=description,
+                file_path=unique_filename,
+                file_name=file.filename,
+                file_size=file_size,
+                file_type=file_extension,
+                uploaded_by=current_user.id
+            )
+            
+            db.session.add(new_resource)
+            db.session.commit()
+            
+            flash('Resource uploaded successfully!')
+            return redirect(url_for('resources'))
+        else:
+            flash('File type not allowed. Please upload a valid file.')
+            return render_template('add_resource.html')
+    
+    return render_template('add_resource.html')
+
+@app.route('/download/<filename>')
+@login_required
+def download_file(filename):
+    """Download a file from the uploads folder"""
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    except FileNotFoundError:
+        flash('File not found.')
+        return redirect(url_for('resources'))
+
+@app.route('/delete_resource/<int:resource_id>', methods=['POST'])
+@login_required
+def delete_resource(resource_id):
+    """Delete a resource"""
+    resource = Resource.query.get_or_404(resource_id)
+    
+    # Only allow deletion by uploader or admin
+    if resource.uploaded_by != current_user.id and not current_user.is_admin:
+        flash('You can only delete your own resources.')
+        return redirect(url_for('resources'))
+    
+    try:
+        # Delete file from filesystem
+        if resource.file_path:
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], resource.file_path)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        # Delete from database
+        db.session.delete(resource)
+        db.session.commit()
+        
+        flash('Resource deleted successfully!')
+    except Exception as e:
+        flash(f'Error deleting resource: {str(e)}')
+    
+    return redirect(url_for('resources'))
 
 @app.route('/faq')
 @login_required

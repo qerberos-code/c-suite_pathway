@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Resource - C-Suite Pathway Program{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-upload"></i> Upload Resource</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Resource Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Brief description of the resource..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="file" class="form-label">File *</label>
+                            <input type="file" class="form-control" id="file" name="file" required>
+                            <div class="form-text">
+                                <strong>Allowed file types:</strong> PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, JPG, JPEG, PNG, GIF<br>
+                                <strong>Maximum file size:</strong> 16MB
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('resources') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Resources
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload Resource
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- File Type Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Supported File Types</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Documents</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-file-pdf text-danger"></i> PDF Files (.pdf)</li>
+                                <li><i class="fas fa-file-word text-primary"></i> Word Documents (.doc, .docx)</li>
+                                <li><i class="fas fa-file-powerpoint text-warning"></i> PowerPoint (.ppt, .pptx)</li>
+                                <li><i class="fas fa-file-excel text-success"></i> Excel Files (.xls, .xlsx)</li>
+                                <li><i class="fas fa-file-alt text-secondary"></i> Text Files (.txt)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Images</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-file-image text-info"></i> Images (.jpg, .jpeg, .png, .gif)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -144,3 +144,6 @@ instance/
 uploads/
 temp/
 logs/
+
+# Uploaded files
+static/uploads/
