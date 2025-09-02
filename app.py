@@ -217,6 +217,15 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
+@app.route('/health')
+def health_check():
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return {'status': 'healthy', 'database': 'connected'}, 200
+    except Exception as e:
+        return {'status': 'unhealthy', 'error': str(e)}, 500
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     try:
@@ -625,5 +634,67 @@ def send_verification_email(user):
 
 if __name__ == '__main__':
     with app.app_context():
+        # Create database tables
         db.create_all()
+        
+        # Check if we need to create a test user
+        test_user = User.query.filter_by(email='chentail@protonmail.ch').first()
+        if not test_user:
+            # Create test user
+            test_user = User(
+                first_name='Angus',
+                last_name='Chen',
+                email='chentail@protonmail.ch',
+                password_hash=generate_password_hash('angus123'),
+                is_verified=True
+            )
+            db.session.add(test_user)
+            db.session.commit()
+            print('✅ Test user created: chentail@protonmail.ch / angus123')
+        
+        # Check if we need to load alumni data
+        alumni_count = Alumni.query.count()
+        if alumni_count == 0:
+            # Load alumni data
+            alumni_data = [
+                ('Alejandro', 'Tizzoni', 'atizzoni@bladex.com'),
+                ('Alexandre', 'Ozzetti', 'alex.ozzetti@gmail.com'),
+                ('Amanjeet', 'Singh', 'amanjeetsaluja@gmail.com'),
+                ('Angus', 'Chen', 'chentail@protonmail.ch'),
+                ('Asaf', 'Snear', 'asafsnear@gmail.com'),
+                ('Belen', 'Robles', 'belenalonsorobles@gmail.com'),
+                ('Diana', 'Orozco', 'dorozco@koskoff.com'),
+                ('Ehab', 'Al Judaibi', 'ealjudaibi@spb.com.sa'),
+                ('Fulya', 'Sarican', 'fulyasarican88@hotmail.com'),
+                ('Gabriel', 'Varga', 'gabriel@aplusfinishes.com'),
+                ('Gonzalo', 'Puerta', 'gongreenesgsolutions@gmail.com'),
+                ('Hani', 'Abdullah', 'hamehmadi@spb.com.sa'),
+                ('Joe', 'Akahane', 'yoichiro.akahane@us.panasonic.com'),
+                ('Juan Carlos', 'Gutierrez', 'jclopez@lopesolutions.com'),
+                ('Marijose', 'Betant', 'marijosebetant@gmail.com'),
+                ('Natalia', 'Mercker', 'natalia.mercker@cfcdiamonds.com'),
+                ('Pedro', 'Pimenta', 'ppimenta@abanca.com'),
+                ('Priscila', 'Pasqualin', 'pripasq@yahoo.com.br'),
+                ('Quinci', 'Martin', 'quincimartin3@gmail.com'),
+                ('Raed', 'Alsufyani', 'ralsufyani@moc.gov.sa'),
+                ('Rafael', 'Bittar', 'rafael.bittar@gmail.com'),
+                ('Runi', 'Mehta', 'mehta.runi@gmail.com'),
+                ('Sam', 'Mangrum', 'sam.mangrum@leewardenergy.com'),
+                ('Saud', 'Alfaadhel', 's.alfaadhel@misk.org.sa'),
+                ('Tommy', 'Hoey', 'tdhoy@grundfos.com'),
+                ('Yousuf', 'Rashid', 'yusuf.s.zaabi@pdo.co.om')
+            ]
+            
+            for first_name, last_name, email in alumni_data:
+                alumni = Alumni(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    is_active=True
+                )
+                db.session.add(alumni)
+            
+            db.session.commit()
+            print(f'✅ Loaded {len(alumni_data)} alumni records')
+    
     app.run(debug=True, port=5001)
